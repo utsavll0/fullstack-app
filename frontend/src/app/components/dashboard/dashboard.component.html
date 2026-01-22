@@ -1,0 +1,240 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>☁️ Cloud Resource Monitor</h1>
+      <div class="user-info">
+        <span>Welcome, {{ currentUser?.username }}</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Filters and Actions -->
+    <div class="controls-section">
+      <div class="filters">
+        <input
+          type="text"
+          placeholder="🔍 Search resources..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onFilterChange()"
+          class="search-input"
+        />
+        
+        <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()" class="filter-select">
+          <option value="all">All Statuses</option>
+          <option *ngFor="let status of getResourceStatuses()" [value]="status">{{ status }}</option>
+        </select>
+        
+        <select [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="filter-select">
+          <option value="all">All Types</option>
+          <option *ngFor="let type of getResourceTypes()" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+      
+      <button class="btn-add" (click)="showAddForm()">+ Add Resource</button>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading">
+      <p>Loading resources...</p>
+    </div>
+
+    <!-- Resources Grid -->
+    <div *ngIf="!isLoading && !showForm" class="resources-grid">
+      <div *ngFor="let resource of filteredResources" class="resource-card">
+        <div class="card-header">
+          <h3>{{ resource.resourceName }}</h3>
+          <span class="badge" [ngClass]="getStatusClass(resource.status)">
+            {{ resource.status }}
+          </span>
+        </div>
+        
+        <div class="card-body">
+          <div class="resource-info">
+            <div class="info-row">
+              <span class="label">Type:</span>
+              <span class="value">{{ resource.resourceType }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Region:</span>
+              <span class="value">{{ resource.region }}</span>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <span class="metric-label">CPU Usage</span>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="resource.cpuUsage"
+                     [ngClass]="getUsageClass(resource.cpuUsage)"></div>
+              </div>
+              <span class="metric-value">{{ resource.cpuUsage }}%</span>
+            </div>
+
+            <div class="metric">
+              <span class="metric-label">Memory Usage</span>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="resource.memoryUsage"
+                     [ngClass]="getUsageClass(resource.memoryUsage)"></div>
+              </div>
+              <span class="metric-value">{{ resource.memoryUsage }}%</span>
+            </div>
+
+            <div class="metric">
+              <span class="metric-label">Disk Usage</span>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="resource.diskUsage"
+                     [ngClass]="getUsageClass(resource.diskUsage)"></div>
+              </div>
+              <span class="metric-value">{{ resource.diskUsage }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-edit" (click)="showEditForm(resource)">Edit</button>
+          <button class="btn-delete" (click)="deleteResource(resource.id)">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !showForm && filteredResources.length === 0" class="empty-state">
+      <p>No resources found. Add a resource to get started!</p>
+    </div>
+
+    <!-- Resource Form -->
+    <div *ngIf="showForm" class="form-container">
+      <h2>{{ isEditing ? 'Edit Resource' : 'Add New Resource' }}</h2>
+      
+      <form (ngSubmit)="saveResource()" #resourceForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resourceName">Resource Name *</label>
+            <input
+              type="text"
+              id="resourceName"
+              name="resourceName"
+              [(ngModel)]="currentResource.resourceName"
+              required
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="resourceType">Resource Type *</label>
+            <select
+              id="resourceType"
+              name="resourceType"
+              [(ngModel)]="currentResource.resourceType"
+              required
+              class="form-control"
+            >
+              <option value="EC2 Instance">EC2 Instance</option>
+              <option value="RDS Database">RDS Database</option>
+              <option value="S3 Bucket">S3 Bucket</option>
+              <option value="Lambda Function">Lambda Function</option>
+              <option value="Elastic Load Balancer">Elastic Load Balancer</option>
+              <option value="DynamoDB Table">DynamoDB Table</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="status">Status *</label>
+            <select
+              id="status"
+              name="status"
+              [(ngModel)]="currentResource.status"
+              required
+              class="form-control"
+            >
+              <option value="Running">Running</option>
+              <option value="Stopped">Stopped</option>
+              <option value="Active">Active</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="region">Region *</label>
+            <select
+              id="region"
+              name="region"
+              [(ngModel)]="currentResource.region"
+              required
+              class="form-control"
+            >
+              <option value="us-east-1">US East (N. Virginia)</option>
+              <option value="us-west-2">US West (Oregon)</option>
+              <option value="eu-west-1">EU (Ireland)</option>
+              <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cpuUsage">CPU Usage (%)</label>
+            <input
+              type="number"
+              id="cpuUsage"
+              name="cpuUsage"
+              [(ngModel)]="currentResource.cpuUsage"
+              min="0"
+              max="100"
+              step="0.1"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="memoryUsage">Memory Usage (%)</label>
+            <input
+              type="number"
+              id="memoryUsage"
+              name="memoryUsage"
+              [(ngModel)]="currentResource.memoryUsage"
+              min="0"
+              max="100"
+              step="0.1"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="diskUsage">Disk Usage (%)</label>
+            <input
+              type="number"
+              id="diskUsage"
+              name="diskUsage"
+              [(ngModel)]="currentResource.diskUsage"
+              min="0"
+              max="100"
+              step="0.1"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancelForm()">Cancel</button>
+          <button type="submit" class="btn-save" [disabled]="!resourceForm.valid">
+            {{ isEditing ? 'Update' : 'Create' }} Resource
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

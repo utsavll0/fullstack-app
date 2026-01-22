@@ -1,0 +1,52 @@
+<div class="login-container">
+  <div class="login-box">
+    <h2>Cloud Monitor</h2>
+    <p class="subtitle">Sign in to your account</p>
+    
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="credentials.username"
+          required
+          placeholder="Enter username"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="credentials.password"
+          required
+          placeholder="Enter password"
+          class="form-control"
+        />
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="isLoading || !loginForm.valid"
+      >
+        {{ isLoading ? 'Logging in...' : 'Login' }}
+      </button>
+    </form>
+
+    <div class="demo-credentials">
+      <p><strong>Demo Credentials:</strong></p>
+      <p>Username: <code>admin</code> Password: <code>admin123</code></p>
+      <p>Username: <code>user</code> Password: <code>user123</code></p>
+    </div>
+  </div>
+</div>
