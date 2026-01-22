@@ -35,6 +35,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // CSRF is disabled for REST API. This is acceptable for stateless APIs
+            // where authentication is performed via HTTP Basic Auth or tokens.
+            // For production, consider using JWT tokens with proper CSRF protection.
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
