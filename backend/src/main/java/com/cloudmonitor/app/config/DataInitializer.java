@@ -6,6 +6,7 @@ import com.cloudmonitor.app.repository.CloudResourceRepository;
 import com.cloudmonitor.app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class DataInitializer implements CommandLineRunner {
     private CloudResourceRepository cloudResourceRepository;
 
     @Autowired
+    @Lazy
     private PasswordEncoder passwordEncoder;
 
     @Override
